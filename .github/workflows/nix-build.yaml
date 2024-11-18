@@ -1,0 +1,32 @@
+name: Test Nix Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch from my nixpkgs fork to use'
+        required: true
+        default: 'master'
+      package:
+        description: 'Package to build'
+        required: true
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: vinnymeller/nixpkgs
+          ref: ${{ github.event.inputs.branch }}
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build package
+        run: nix build .#${{ github.event.inputs.package }}
